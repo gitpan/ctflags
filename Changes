@@ -1,5 +1,8 @@
 Revision history for Perl extension ctflags.
 
+0.03  Fri Jan 31 2003
+	- README file updated
+
 0.02  Fri Jan 31 2003
 	- cleaned up for CPAN distribution
 	- documentation for ctflags::long written

@@ -26,11 +26,11 @@ sub import {
 	check_defopt $alias, 'alias';
 	foreach (arrayorsplit $alias) {
 	  if ( m{^
-		 ([\w:]+)    # $1=namespace
+		 ($ns_re)    # $1=namespace
 		 :
-		 (\w+)       # $2=name
+		 ($identifier_re) # $2=name
 		 =
-		 ([a-zA-Z])  # $3=flag
+		 ($flag_re)  # $3=flag
 		 $
 		}x ) {
 	    set_ctflag_alias $1, $2, $3;
@@ -45,9 +45,9 @@ sub import {
 	check_defopt $rest, 'restriction';
 	foreach (arrayorsplit $rest) {
 	  if (m{^
-		([\w:]+)    # $1=namespace
+		($ns_re)    # $1=namespace
 		:
-		([a-zA-Z]*) # $2=flagset
+		($flagset_re) # $2=flagset
 		$
 	       }x ) {
 	    restrict_ctflags $1, $2;

@@ -20,7 +20,9 @@ our @EXPORT = qw( set_ctflag
 		  allowed_ctflags
 		  is_ctflag_allowed
 		  set_ctflag_alias
-		  resolve_ctflag_alias );
+		  resolve_ctflag_alias
+		  set_ctflag_call
+		  get_ctflag_call );
 
 
 use ctflags::check;
@@ -28,6 +30,7 @@ use ctflags::check;
 my %memory;
 my %meta;
 my %alias;
+my %call;
 
 # In most of ctflags subrutines, argument checking is done indirectly
 # when subrutines here, in ctflags::memory are called, and so all of
@@ -82,17 +85,34 @@ sub get_ctflag ($$) {
   check_value $default;
   _is_allowed $ns, $flag;
   my $m=$memory{$ns.":".$flag};
-  defined $m ? $m : ($default || 0);
+  int(defined $m ? $m : ($default || 0));
 }
 
+sub extend_flagsetext ($$) {
+  my ($fse, $ns)=@_;
+  check_ns($ns);
+  check_flagsetext($fse);
+
+  if ($fse eq '*') {
+    return join ('', allowed_ctflags($ns))
+  }
+
+  if ($fse=~/^!(.*)/) {
+    my $inv=$1;
+    return join('',
+		(grep {index($inv, $_)<0 } allowed_ctflags($ns)));
+  }
+
+  return $fse;
+}
 
 # restrict which ctflags are allowed inside a namepace
 
+
 sub restrict_ctflags ($$) {
   my $ns=shift;
-  my $flagset=shift;
   check_ns $ns;
-  check_flagset $flagset;
+  my $flagset=extend_flagsetext(shift, $ns);
   $meta{$ns.':restricted'}=$flagset;
 }
 
@@ -136,6 +156,27 @@ sub resolve_ctflag_alias ($$) {
   return get_ctflag($ns, $alias{$ns.':'.$alias});
 }
 
+sub set_ctflag_call ($$$) {
+  my ($ns, $flagsetext, $sub)=@_;
+  check_ns $ns;
+  my $flags=extend_flagsetext($flagsetext, $ns);
+  check_sub $sub;
+  foreach my $f (split //, $flags) {
+    _is_allowed $ns, $f;
+    $call{$ns.':'.$f}=$sub;
+  }
+}
+
+sub get_ctflag_call ($$) {
+  my ($ns, $flag) =@_;
+  check_ns($ns);
+  check_flag($flag);
+  my $n=$ns.':'.$flag;
+  if (exists $call{$n}) {
+    return $call{$n};
+  }
+  return undef;
+}
 
 1;
 __END__

@@ -17,16 +17,19 @@ our @EXPORT = qw( chack_identifier
 		  check_flag
 		  check_value
 		  check_flagset
+		  check_flagsetext
 		  check_alias
 		  check_defopt
 		  check_envname
 		  check_cntprefix
 		  check_package
+		  check_sub
 		  $identifier_re
 		  $ns_re
 		  $flag_re
 		  $value_re
 		  $flagset_re
+		  $flagsetext_re
 		  $alias_re
 		  $envname_re
 		  $cntprefix_re
@@ -67,7 +70,13 @@ sub check_value ($ ) {
 our $flagset_re=qr|(?:$flag_re)*|;
 sub check_flagset ($ ) {
   (defined $_[0] and $_[0]=~/^$flagset_re$/o)
-    or die "invalid ctflags restriction set ".myquote($_[0])."\n";
+    or die "invalid ctflags set ".myquote($_[0])."\n";
+}
+
+our $flagsetext_re=qr{\*|!?$flagset_re};
+sub check_flagsetext ($) {
+  (defined $_[0] and $_[0]=~/^$flagsetext_re$/o)
+    or die "invalid ctflags set ".myquote($_[0])."\n";
 }
 
 our $alias_re=$identifier_re;
@@ -97,6 +106,11 @@ our $package_re=qr|$identifier_re(?:::$identifier_re)*|;
 sub check_package ($ ) {
   (defined $_[0] and $_[0]=~/^$package_re$/o)
     or die "invalid package name ".myquote($_[0])."\n";
+}
+
+sub check_sub ($) {
+  (defined $_[0] and UNIVERSAL::isa($_[0], 'CODE'))
+    or die "invalid sub ".myquote($_[0])."\n";
 }
 
 1;

@@ -1,6 +1,6 @@
 package ctflags;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use 5.006;
 
@@ -48,17 +48,19 @@ sub parse_flags ($$) {
 
 sub export_sub ($$$ ) {
   my $qname=$_[0].'::'.$_[1];
-  my $value=int $_[2];
+  my $value=$_[2];
 
   no strict 'refs';
   *$qname = sub () { $value };
-
-  # old implementation...
-  # my ($package, $name, $value)=@_;
-  # eval "sub ${package}::$name () { $value }";
-  # die if $@;
 }
 
+sub export_subsub ($$$ ) {
+  my $qname=$_[0].'::'.$_[1];
+  my $sub=$_[2];
+
+  no strict 'refs';
+  *$qname = $sub
+}
 
 # export_ctflags_as combine ctflag set with arithmetic or and export
 # constant with the resulting value
@@ -77,7 +79,15 @@ sub export_ctflags ($$$$) {
   my ($package, $ns, $flags, $prefix)=@_;
   foreach my $fe (parse_flags $ns, $flags) {
     my ($f)=split '', $fe;
-    export_sub $package, $prefix.$f, get_ctflag($ns, $fe);
+    my $v=get_ctflag($ns, $fe);
+    my $sub=get_ctflag_call($ns, $f);
+    if ($sub) {
+      export_subsub $package, $prefix,
+	sub () {&$sub($ns, $f, $v); $v}
+    }
+    else {
+      export_sub $package, $prefix.$f, $v;
+    }
   }
 }
 
